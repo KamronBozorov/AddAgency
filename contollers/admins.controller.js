@@ -5,6 +5,8 @@ const asyncHandler = require("../helpers/async.hendler");
 const successResponse = require("../helpers/success.response");
 const { ValidationError, NotFoundError } = require("../helpers/custom.error");
 const jwtService = require("../services/jwt.service");
+const XLSX = require("xlsx");
+const { CustomError } = require("../helpers/custom.error");
 
 const getAllAdmins = asyncHandler(async (req, res) => {
   const admins = await Admin.findAll();
@@ -14,7 +16,7 @@ const getAllAdmins = asyncHandler(async (req, res) => {
 const getAdminById = asyncHandler(async (req, res) => {
   const admin = await Admin.findByPk(req.params.id);
   if (!admin) {
-    throw new NotFoundError('Admin not found');
+    throw new NotFoundError("Admin not found");
   }
   successResponse(res, "Admin retrieved successfully", admin);
 });
@@ -27,7 +29,7 @@ const createAdmin = asyncHandler(async (req, res) => {
 const updateAdmin = asyncHandler(async (req, res) => {
   const admin = await Admin.findByPk(req.params.id);
   if (!admin) {
-    throw new NotFoundError('Admin not found');
+    throw new NotFoundError("Admin not found");
   }
   await admin.update(req.body);
   successResponse(res, "Admin updated successfully", admin);
@@ -36,7 +38,7 @@ const updateAdmin = asyncHandler(async (req, res) => {
 const deleteAdmin = asyncHandler(async (req, res) => {
   const admin = await Admin.findByPk(req.params.id);
   if (!admin) {
-    throw new NotFoundError('Admin not found');
+    throw new NotFoundError("Admin not found");
   }
   await admin.destroy();
   successResponse(res, "Admin deleted successfully", null, 204);
@@ -178,6 +180,46 @@ const refreshToken = asyncHandler(async (req, res) => {
   });
 });
 
+const exportAdminsToExcel = asyncHandler(async (req, res) => {
+  const admins = await Admin.findAll({
+    attributes: ["id", "email", "hashed_password", "is_active"],
+  });
+
+  if (!admins || admins.length === 0) {
+    return res.status(404).json({
+      type: "Error",
+      message: "Admin was not found",
+    });
+  }
+
+  const excelData = admins.map((admin) => ({
+    ID: admin.id,
+    Name: admin.name,
+    Email: admin.email,
+    Password: admin.hashed_password,
+    Role: admin.role,
+    Status: admin.is_active ? "Active" : "Inactive",
+  }));
+
+  const workbook = XLSX.utils.book_new();
+  const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Admins");
+
+  const excelBuffer = XLSX.write(workbook, {
+    bookType: "xlsx",
+    type: "buffer",
+  });
+
+  res.setHeader(
+    "Content-Type",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  );
+  res.setHeader("Content-Disposition", "attachment; filename=admins.xlsx");
+
+  res.send(excelBuffer);
+});
+
 module.exports = {
   getAllAdmins,
   getAdminById,
@@ -187,5 +229,6 @@ module.exports = {
   registerAdmin,
   login,
   refreshToken,
-  ownerLogin
+  ownerLogin,
+  exportAdminsToExcel,
 };

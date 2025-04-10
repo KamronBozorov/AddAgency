@@ -11,6 +11,7 @@ const {
   refreshToken,
   resetPassword,
 } = require("../contollers/owners.controller");
+const creatorAdminOwnerSelfGuard = require("../guards/creator.admin.ownerSelf.guard");
 
 const router = express.Router();
 
@@ -23,7 +24,7 @@ router.post("/activate/:otp", activateOwner);
 router.get("/", getAllOwners);
 router.get("/:id", getOwnerById);
 router.post("/", createOwner);
-router.put("/:id", updateOwner);
-router.delete("/:id", deleteOwner);
+router.put("/:id", creatorAdminOwnerSelfGuard, updateOwner);
+router.delete("/:id", creatorAdminOwnerSelfGuard, deleteOwner);
 
 module.exports = router;

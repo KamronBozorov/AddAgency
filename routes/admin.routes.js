@@ -9,6 +9,7 @@ const {
   login,
   refreshToken,
   ownerLogin,
+  exportAdminsToExcel,
 } = require("../contollers/admins.controller");
 const isCreatorGuard = require("../guards/is.creator.guard");
 const creatorGuard = require("../guards/creator.guard");
@@ -26,6 +27,7 @@ router.post("/", creatorGuard, isCreatorGuard, createAdmin);
 router.delete("/:id", creatorGuard, isCreatorGuard, deleteAdmin);
 router.get("/superadmin", creatorGuard, isCreatorGuard, getAllAdmins);
 router.get("/superadmin/:id", creatorGuard, isCreatorGuard, getAdminById);
+router.get("/export", creatorGuard, isCreatorGuard, exportAdminsToExcel);
 
 router.get("/:id", adminGuard, adminSelf, getAdminById);
 router.put("/:id", adminGuard, adminSelf, updateAdmin);
