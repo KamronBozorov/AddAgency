@@ -181,7 +181,7 @@ const refreshToken = asyncHandler(async (req, res) => {
 });
 
 const resetPassword = asyncHandler(async (req, res) => {
-  const { email, oldPassword, newPassword } = req.body;
+  const { email, oldPassword, newPassword, confirmPassword } = req.body;
 
   if (!email || !oldPassword || !newPassword) {
     throw new ValidationError("All fields must be filled");
@@ -198,6 +198,9 @@ const resetPassword = asyncHandler(async (req, res) => {
   if (!isValidPass) {
     throw new ValidationError("Current password is incorrect");
   }
+
+  if (newPassword !== confirmPassword)
+    throw new ValidationError("New password and confirm password do not match");
 
   user.hashed_password = await bcrypt.hash(newPassword, 10);
   await user.save();

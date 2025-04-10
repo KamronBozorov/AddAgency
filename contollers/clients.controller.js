@@ -183,27 +183,31 @@ const refreshToken = asyncHandler(async (req, res) => {
 });
 
 const resetPassword = asyncHandler(async (req, res) => {
-  const { email, prevPass, newPass, repeatPass } = req.body;
+  const { email, oldPassword, newPassword, confirmPassword } = req.body;
+
+  if (!email || !oldPassword || !newPassword) {
+    throw new ValidationError("All fields must be filled");
+  }
 
   const user = await Client.findOne({ where: { email } });
 
-  if (!user) throw new NotFoundError("User not found");
-
-  const isValidPass = await bcrypt.compare(prevPass, user.hashed_password);
-
-  if (!isValidPass) throw new NotFoundError("User not found");
-
-  if (
-    newPass !== repeatPass ||
-    (await bcrypt.compare(newPass, user.hashed_password))
-  ) {
-    throw new Error("Passwords not matched");
+  if (!user) {
+    throw new NotFoundError("Owner not found");
   }
 
-  user.hashed_password = await bcrypt.hash(newPass, 10);
+  const isValidPass = await bcrypt.compare(oldPassword, user.hashed_password);
+
+  if (!isValidPass) {
+    throw new ValidationError("Current password is incorrect");
+  }
+
+  if (newPassword !== confirmPassword)
+    throw new ValidationError("New password and confirm password do not match");
+
+  user.hashed_password = await bcrypt.hash(newPassword, 10);
   await user.save();
 
-  successResponse(res, "Password updated successfully.");
+  successResponse(res, "Password updated successfully");
 });
 
 const paidProducts = asyncHandler(async (req, res) => {
